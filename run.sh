@@ -13,11 +13,15 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Create virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv venv
+# Clean up old virtual environment to ensure fresh install
+if [ -d "venv" ]; then
+    echo "Removing old virtual environment..."
+    rm -rf venv
 fi
+
+# Create virtual environment
+echo "Creating virtual environment..."
+python3 -m venv venv
 
 # Activate virtual environment
 echo "Activating virtual environment..."

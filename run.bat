@@ -16,11 +16,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Create virtual environment if it doesn't exist
-if not exist "venv" (
-    echo Creating virtual environment...
-    python -m venv venv
+REM Clean up old virtual environment to ensure fresh install
+if exist "venv" (
+    echo Removing old virtual environment...
+    rmdir /s /q venv
 )
+
+REM Create virtual environment
+echo Creating virtual environment...
+python -m venv venv
 
 REM Activate virtual environment
 echo Activating virtual environment...
