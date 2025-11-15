@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google PAA Scraper</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🔥 Google PAA Scraper</h1>
+                <p class="subtitle">Scrape People Also Ask questions from Google Search</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="form-group">
+                    <label for="apiKey">Firecrawl API Key</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="password"
+                            id="apiKey"
+                            class="input-field"
+                            placeholder="Enter your Firecrawl API key"
+                            autocomplete="off"
+                        >
+                        <button class="toggle-password" id="togglePassword" type="button" title="Show/hide API key">
+                            👁️
+                        </button>
+                    </div>
+                    <small class="help-text">
+                        Get your API key from <a href="https://firecrawl.dev" target="_blank">firecrawl.dev</a>
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="query">Search Query</label>
+                    <input
+                        type="text"
+                        id="query"
+                        class="input-field"
+                        placeholder="e.g., how to make pizza, SEO tips, machine learning"
+                        maxlength="500"
+                    >
+                    <small class="help-text" id="charCount">0/500 characters</small>
+                </div>
+
+                <button id="scrapeBtn" class="btn-primary">
+                    <span class="btn-text">Scrape PAA</span>
+                    <span class="btn-loader hidden">
+                        <span class="spinner"></span> Scraping...
+                    </span>
+                </button>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2>Results</h2>
+                    <button id="closeResults" class="btn-close">×</button>
+                </div>
+
+                <!-- Query Display -->
+                <div class="result-item">
+                    <strong>Query:</strong>
+                    <span id="resultQuery"></span>
+                </div>
+
+                <!-- Status Message -->
+                <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                <!-- Questions List -->
+                <div id="questionsContainer" style="display: none;">
+                    <h3>People Also Ask Questions</h3>
+                    <div class="questions-list" id="questionsList"></div>
+
+                    <!-- Export Options -->
+                    <div class="export-options">
+                        <button id="exportJson" class="btn-secondary">📥 Export as JSON</button>
+                        <button id="copyJson" class="btn-secondary">📋 Copy JSON</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <p>Enter a search query and click "Scrape PAA" to get started</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Google PAA Scraper • Powered by Firecrawl API</p>
+        </footer>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

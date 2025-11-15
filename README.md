@@ -6,8 +6,9 @@ A simple, focused tool that scrapes **People Also Ask** (PAA) questions from Goo
 
 - 🎯 **One-purpose tool**: Scrapes only "People Also Ask" questions from Google search results
 - 🔥 **Firecrawl powered**: Uses the Firecrawl API for reliable web scraping
-- 📋 **Multiple output formats**: Text, JSON, or save to file
-- 🚀 **Easy to use**: Simple CLI interface
+- 📋 **Multiple output formats**: Text, JSON, or save to file (CLI) / JSON or export (Web)
+- 🚀 **Easy to use**: Both CLI and beautiful web interface
+- 💻 **Web GUI**: Beautiful, responsive web interface with dark/light design
 - 🔧 **Minimal dependencies**: Only essential packages included
 
 ## Installation
@@ -38,6 +39,44 @@ echo "FIRECRAWL_API_KEY=your_api_key_here" > .env
 You can get a Firecrawl API key from [https://firecrawl.dev](https://firecrawl.dev)
 
 ## Usage
+
+### Web Interface (Recommended)
+
+**Quick Start:**
+
+```bash
+# Linux/Mac
+bash run.sh
+
+# Windows
+run.bat
+```
+
+Then open your browser to `http://localhost:5000`
+
+**Features:**
+- Enter your API key securely (password field with toggle)
+- Type your search query
+- Click "Scrape PAA" to get results
+- Export results as JSON or copy to clipboard
+- Beautiful, responsive design
+
+**Without the startup script:**
+
+```bash
+# Activate virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies (if needed)
+pip install -r requirements.txt
+
+# Run the Flask app
+python app.py
+```
+
+Then visit `http://localhost:5000`
+
+### Command Line Interface
 
 ### Basic usage (display in terminal):
 ```bash
@@ -98,9 +137,18 @@ People Also Ask Questions:
 seokwtool3/
 ├── src/
 │   ├── __init__.py
-│   ├── scraper.py      # Main scraper logic
-│   └── cli.py          # Command-line interface
-├── .env                # Environment variables (create this)
+│   ├── scraper.py         # Main scraper logic
+│   └── cli.py             # Command-line interface
+├── static/
+│   ├── style.css          # Web UI styles
+│   └── script.js          # Web UI JavaScript
+├── templates/
+│   └── index.html         # Web UI HTML
+├── app.py                 # Flask web application
+├── run.sh                 # Startup script (Linux/Mac)
+├── run.bat                # Startup script (Windows)
+├── example.py             # Python usage example
+├── .env                   # Environment variables (create this)
 ├── .gitignore
 ├── requirements.txt
 └── README.md
@@ -123,19 +171,40 @@ The tool uses the [Firecrawl API](https://firecrawl.dev) which provides:
 
 ## Troubleshooting
 
-### "Firecrawl API key not provided"
+### Web Interface
+
+**Port already in use (Address already in use)**
+```bash
+# Use a different port
+export PORT=8000  # or set PORT=8000 on Windows
+python app.py
+# Then visit http://localhost:8000
+```
+
+**API key not accepted**
+- Double-check your Firecrawl API key
+- Make sure you copied the entire key without extra spaces
+- Visit https://firecrawl.dev to verify your key is valid
+
+**CORS errors**
+- This shouldn't happen as CORS is enabled in the Flask app
+- If you see CORS errors, try clearing your browser cache
+
+### CLI
+
+**"Firecrawl API key not provided"**
 Make sure you have set the `FIRECRAWL_API_KEY` environment variable:
 ```bash
 export FIRECRAWL_API_KEY=your_key_here
 # Or create a .env file with: FIRECRAWL_API_KEY=your_key_here
 ```
 
-### "No PAA questions found"
+**"No PAA questions found"**
 - The query might not have PAA results on Google
 - Try a different, more common search query
 - Check if Google is blocking the request
 
-### Module not found errors
+**Module not found errors**
 Make sure you're in the virtual environment and have installed dependencies:
 ```bash
 pip install -r requirements.txt
