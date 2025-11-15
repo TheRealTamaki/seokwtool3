@@ -1,0 +1,5 @@
+firecrawl-py==1.9.10
+python-dotenv==1.0.0
+requests==2.31.0
+beautifulsoup4==4.12.2
+click==8.1.7
