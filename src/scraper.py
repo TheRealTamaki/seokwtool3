@@ -3,7 +3,7 @@
 import os
 import re
 from typing import List, Dict, Any
-from firecrawl import FirecrawlApp
+from firecrawl import Firecrawl
 from bs4 import BeautifulSoup
 
 
@@ -23,7 +23,7 @@ class GooglePAAScraper:
                 "Firecrawl API key not provided. "
                 "Set FIRECRAWL_API_KEY environment variable or pass api_key parameter."
             )
-        self.app = FirecrawlApp(api_key=self.api_key)
+        self.app = Firecrawl(api_key=self.api_key)
 
     def scrape_paa(self, query: str) -> Dict[str, Any]:
         """
@@ -47,7 +47,7 @@ class GooglePAAScraper:
             print(f"URL: {search_url}")
 
             # Use Firecrawl to scrape the page
-            result = self.app.scrape_url(search_url)
+            result = self.app.scrape(search_url)
 
             # Extract PAA questions from the scraped content
             paa_data = self._extract_paa_from_content(result)
@@ -67,25 +67,34 @@ class GooglePAAScraper:
                 "error": str(e),
             }
 
-    def _extract_paa_from_content(self, scraped_content: Dict[str, Any]) -> List[Dict[str, str]]:
+    def _extract_paa_from_content(self, scraped_content: Any) -> List[Dict[str, str]]:
         """
         Extract People Also Ask questions from scraped content
 
         Args:
-            scraped_content: Content returned from Firecrawl scrape_url
+            scraped_content: Content returned from Firecrawl scrape (dict or Document object)
 
         Returns:
             List of PAA questions with their text
         """
         paa_questions = []
 
+        # Convert to dict if it's an object
+        if hasattr(scraped_content, '__dict__'):
+            content_dict = scraped_content.__dict__
+        else:
+            content_dict = scraped_content
+
         # Try to extract from markdown first (easier to parse)
-        if "markdown" in scraped_content:
-            paa_questions = self._extract_from_markdown(scraped_content["markdown"])
+        markdown = content_dict.get("markdown") or getattr(scraped_content, "markdown", None)
+        if markdown:
+            paa_questions = self._extract_from_markdown(markdown)
 
         # If markdown extraction didn't work, try HTML
-        if not paa_questions and "html" in scraped_content:
-            paa_questions = self._extract_from_html(scraped_content["html"])
+        if not paa_questions:
+            html = content_dict.get("html") or getattr(scraped_content, "html", None)
+            if html:
+                paa_questions = self._extract_from_html(html)
 
         return paa_questions
 
