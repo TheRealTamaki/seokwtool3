@@ -51,6 +51,22 @@
                     <small class="help-text" id="charCount">0/500 characters</small>
                 </div>
 
+                <div class="form-group">
+                    <label for="depth">Depth Level (How many questions to get)</label>
+                    <div class="depth-control">
+                        <input
+                            type="range"
+                            id="depth"
+                            class="depth-slider"
+                            min="1"
+                            max="3"
+                            value="1"
+                        >
+                        <span class="depth-value" id="depthValue">1 (4 questions)</span>
+                    </div>
+                    <small class="help-text">Level 1: ~4 questions | Level 2: ~8 questions | Level 3: ~12 questions</small>
+                </div>
+
                 <button id="scrapeBtn" class="btn-primary">
                     <span class="btn-text">Scrape PAA</span>
                     <span class="btn-loader hidden">

@@ -43,6 +43,7 @@ def scrape_paa():
 
         query = data.get("query", "").strip()
         api_key = data.get("api_key", "").strip()
+        depth = data.get("depth", 1)
 
         # Validate inputs
         if not query:
@@ -57,8 +58,8 @@ def scrape_paa():
         # Initialize scraper with provided API key
         scraper = GooglePAAScraper(api_key=api_key)
 
-        # Scrape PAA
-        result = scraper.scrape_paa(query)
+        # Scrape PAA with specified depth
+        result = scraper.scrape_paa(query, depth=depth)
 
         return jsonify(result), 200
 

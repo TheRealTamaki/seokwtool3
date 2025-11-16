@@ -356,6 +356,63 @@ body {
     border-top: 2px solid var(--border-color);
 }
 
+/* Depth Control */
+.depth-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.depth-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-color);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.depth-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.depth-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(255, 107, 53, 0.4);
+}
+
+.depth-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.depth-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(255, 107, 53, 0.4);
+}
+
+.depth-value {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 120px;
+    text-align: right;
+}
+
 /* Empty State */
 .empty-state {
     text-align: center;

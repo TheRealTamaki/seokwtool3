@@ -11,12 +11,7 @@ class GooglePAAScraper:
     """Scrapes People Also Ask (PAA) questions from Google search results"""
 
     def __init__(self, api_key: str = None):
-        """
-        Initialize the scraper with Firecrawl API key
-
-        Args:
-            api_key: Firecrawl API key (defaults to FIRECRAWL_API_KEY env var)
-        """
+        """Initialize the scraper with Firecrawl API key"""
         self.api_key = api_key or os.getenv("FIRECRAWL_API_KEY")
         if not self.api_key:
             raise ValueError(
@@ -25,32 +20,22 @@ class GooglePAAScraper:
             )
         self.app = Firecrawl(api_key=self.api_key)
 
-    def scrape_paa(self, query: str) -> Dict[str, Any]:
+    def scrape_paa(self, query: str, depth: int = 1) -> Dict[str, Any]:
         """
-        Scrape People Also Ask section from Google search results for a given query
+        Scrape People Also Ask section from Google search results
 
         Args:
-            query: Search query to look up on Google
-
-        Returns:
-            Dictionary containing:
-            - query: The original search query
-            - paa_questions: List of PAA questions and their details
-            - raw_html: Raw HTML content from the page (optional)
-            - success: Whether scraping was successful
+            query: Search query
+            depth: How many levels of PAA to scrape (1-3, default 1)
         """
         try:
-            # Build Google search URL
+            depth = max(1, min(3, int(depth)))  # Clamp between 1-3
             search_url = f"https://www.google.com/search?q={query}"
-
             print(f"Scraping Google search results for: {query}")
             print(f"URL: {search_url}")
 
-            # Use Firecrawl to scrape the page
             result = self.app.scrape(search_url)
-
-            # Extract PAA questions from the scraped content
-            paa_data = self._extract_paa_from_content(result)
+            paa_data = self._extract_paa_from_content(result, depth=depth)
 
             return {
                 "query": query,
@@ -58,7 +43,6 @@ class GooglePAAScraper:
                 "success": True,
                 "message": f"Successfully scraped {len(paa_data)} PAA questions",
             }
-
         except Exception as e:
             return {
                 "query": query,
@@ -67,107 +51,102 @@ class GooglePAAScraper:
                 "error": str(e),
             }
 
-    def _extract_paa_from_content(self, scraped_content: Any) -> List[Dict[str, str]]:
-        """
-        Extract People Also Ask questions from scraped content
-
-        Args:
-            scraped_content: Content returned from Firecrawl scrape (dict or Document object)
-
-        Returns:
-            List of PAA questions with their text
-        """
+    def _extract_paa_from_content(self, scraped_content: Any, depth: int = 1) -> List[Dict[str, str]]:
+        """Extract PAA questions from scraped content"""
         paa_questions = []
 
-        # Convert to dict if it's an object
         if hasattr(scraped_content, '__dict__'):
             content_dict = scraped_content.__dict__
         else:
             content_dict = scraped_content
 
-        # Try to extract from markdown first (easier to parse)
         markdown = content_dict.get("markdown") or getattr(scraped_content, "markdown", None)
         if markdown:
-            paa_questions = self._extract_from_markdown(markdown)
+            paa_questions = self._extract_from_markdown(markdown, depth=depth)
 
-        # If markdown extraction didn't work, try HTML
         if not paa_questions:
             html = content_dict.get("html") or getattr(scraped_content, "html", None)
             if html:
-                paa_questions = self._extract_from_html(html)
+                paa_questions = self._extract_from_html(html, depth=depth)
 
         return paa_questions
 
-    def _extract_from_markdown(self, markdown_content: str) -> List[Dict[str, str]]:
-        """
-        Extract PAA questions from markdown content using pattern matching
-
-        Args:
-            markdown_content: Markdown text from Firecrawl
-
-        Returns:
-            List of PAA questions
-        """
+    def _extract_from_markdown(self, markdown_content: str, depth: int = 1) -> List[Dict[str, str]]:
+        """Extract only PAA questions from markdown, filtering out noise"""
         paa_questions = []
 
-        # Look for "People also ask" section
         if "People also ask" not in markdown_content:
             return paa_questions
 
-        # Find the section after "People also ask"
-        paa_section = markdown_content.split("People also ask")[1] if "People also ask" in markdown_content else ""
+        # Split and find the PAA section
+        parts = markdown_content.split("People also ask")
+        if len(parts) < 2:
+            return paa_questions
 
-        # Extract questions - they typically appear as list items or numbered items
-        # Look for various patterns of question formatting
-        patterns = [
-            r"^[\*\-\•]\s+(.+?)$",  # Bullet points
-            r"^\d+\.\s+(.+?)$",  # Numbered
-            r"^#{1,6}\s+(.+?)$",  # Headers
-        ]
+        paa_section = parts[1]
+
+        # Find where the next major section starts
+        next_section_match = re.search(r"\n#+\s", paa_section)
+        if next_section_match:
+            paa_section = paa_section[:next_section_match.start()]
 
         lines = paa_section.split("\n")
+
         for line in lines:
             line = line.strip()
+
+            # Skip empty lines
             if not line:
                 continue
 
-            # Stop if we hit another major section
-            if re.match(r"^#+\s", line) and "People also ask" not in line:
-                break
+            # Skip lines that are clearly not questions
+            # Skip URLs, bold text, lists of multiple items
+            if line.startswith("[") and line.endswith("]"):  # Links
+                continue
+            if line.startswith("http"):  # URLs
+                continue
+            if " | " in line:  # Separator lines
+                continue
+            if line.startswith("#"):  # Headers
+                continue
 
-            # Try to match question patterns
-            for pattern in patterns:
-                match = re.match(pattern, line)
-                if match:
-                    question = match.group(1).strip()
-                    # Filter out noise - questions usually have "?" or are reasonable length
-                    if len(question) > 5 and len(question) < 500:
-                        paa_questions.append({"question": question})
-                    break
+            # Check if it looks like a question
+            # PAA questions are typically:
+            # - Short lines (under 200 chars)
+            # - Contain a question mark OR
+            # - Start with question words
+            looks_like_question = (
+                ("?" in line) or
+                re.match(r"^(what|how|why|when|where|which|who|can|does|do|is|are|will|would|could|should|has|have)\s", line, re.IGNORECASE)
+            )
 
-        return paa_questions
+            if looks_like_question and len(line) < 200 and len(line) > 5:
+                # Remove leading numbers, bullets, and bold markers
+                clean_question = re.sub(r"^[\*\-\•\d+\.\s]+", "", line)
+                clean_question = clean_question.replace("**", "").strip()
 
-    def _extract_from_html(self, html_content: str) -> List[Dict[str, str]]:
-        """
-        Extract PAA questions from HTML content
+                # Only add if we haven't seen it before (avoid duplicates)
+                if clean_question and not any(q["question"] == clean_question for q in paa_questions):
+                    paa_questions.append({"question": clean_question})
 
-        Args:
-            html_content: HTML text from Firecrawl
+                    # Stop if we've reached the depth limit
+                    if len(paa_questions) >= depth * 4:
+                        break
 
-        Returns:
-            List of PAA questions
-        """
+        return paa_questions[:depth * 4]  # Limit by depth
+
+    def _extract_from_html(self, html_content: str, depth: int = 1) -> List[Dict[str, str]]:
+        """Extract PAA questions from HTML content"""
         paa_questions = []
 
         try:
             soup = BeautifulSoup(html_content, "html.parser")
 
-            # Look for elements that typically contain PAA questions
-            # Google uses various div structures - look for common patterns
+            # Look for PAA container
             question_selectors = [
-                "div[data-sokoban-container] span",  # Google's PAA container
-                'g-scrolling-carousel div[role="option"]',  # Carousel items
-                "div.related-question-pair span",  # Related questions
+                "div[data-sokoban-container] span",
+                'g-scrolling-carousel div[role="option"]',
+                "div.related-question-pair span",
             ]
 
             for selector in question_selectors:
@@ -176,45 +155,41 @@ class GooglePAAScraper:
                     if elements:
                         for element in elements:
                             text = element.get_text(strip=True)
-                            if text and len(text) > 5 and len(text) < 500:
-                                paa_questions.append({"question": text})
+                            # Filter for actual questions
+                            if (text and len(text) > 5 and len(text) < 200 and
+                                ("?" in text or re.match(r"^(what|how|why|when|where|which|who|can|does)", text, re.IGNORECASE))):
+                                if not any(q["question"] == text for q in paa_questions):
+                                    paa_questions.append({"question": text})
+
+                                    if len(paa_questions) >= depth * 4:
+                                        return paa_questions[:depth * 4]
                 except:
                     continue
 
-            # If no questions found with specific selectors, try a broader approach
             if not paa_questions:
-                paa_questions = self._extract_paa_generic(soup)
+                paa_questions = self._extract_paa_generic(soup, depth=depth)
 
         except Exception as e:
             print(f"Error parsing HTML: {e}")
 
-        return paa_questions
+        return paa_questions[:depth * 4]
 
-    def _extract_paa_generic(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
-        """
-        Generic extraction of PAA questions by looking for text near "People also ask"
-
-        Args:
-            soup: BeautifulSoup object
-
-        Returns:
-            List of PAA questions
-        """
+    def _extract_paa_generic(self, soup: BeautifulSoup, depth: int = 1) -> List[Dict[str, str]]:
+        """Generic extraction of PAA questions"""
         paa_questions = []
 
-        # Find text "People also ask" in the page
         for element in soup.find_all(string=re.compile("People also ask", re.IGNORECASE)):
-            # Navigate to parent container
             parent = element.parent
-            while parent and len(paa_questions) < 10:
-                # Look for sibling elements that might contain questions
+            while parent and len(paa_questions) < depth * 4:
                 for sibling in parent.find_next_siblings():
                     text = sibling.get_text(strip=True)
-                    # Filter for question-like text
-                    if "?" in text and len(text) > 5 and len(text) < 500:
-                        paa_questions.append({"question": text})
-                        if len(paa_questions) >= 10:
-                            break
+                    if (text and "?" in text and len(text) > 5 and len(text) < 200 and
+                        not text.startswith("http") and not text.startswith("[")):
+                        if not any(q["question"] == text for q in paa_questions):
+                            paa_questions.append({"question": text})
+
+                            if len(paa_questions) >= depth * 4:
+                                return paa_questions[:depth * 4]
                 parent = parent.parent
 
-        return paa_questions
+        return paa_questions[:depth * 4]

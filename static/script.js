@@ -1,6 +1,8 @@
 // DOM Elements
 const apiKeyInput = document.getElementById("apiKey");
 const queryInput = document.getElementById("query");
+const depthInput = document.getElementById("depth");
+const depthValueEl = document.getElementById("depthValue");
 const scrapeBtn = document.getElementById("scrapeBtn");
 const resultsSection = document.getElementById("resultsSection");
 const emptyState = document.getElementById("emptyState");
@@ -23,6 +25,7 @@ scrapeBtn.addEventListener("click", handleScrape);
 closeResultsBtn.addEventListener("click", closeResults);
 togglePasswordBtn.addEventListener("click", togglePasswordVisibility);
 queryInput.addEventListener("input", updateCharCount);
+depthInput.addEventListener("input", updateDepthDisplay);
 exportJsonBtn.addEventListener("click", exportAsJson);
 copyJsonBtn.addEventListener("click", copyToClipboard);
 
@@ -55,6 +58,15 @@ function updateCharCount() {
     const length = queryInput.value.length;
     charCountEl.textContent = `${length}/500 characters`;
     charCountEl.style.color = length > 400 ? "var(--warning-color)" : "var(--text-light)";
+}
+
+/**
+ * Update depth display
+ */
+function updateDepthDisplay() {
+    const depth = depthInput.value;
+    const counts = { 1: 4, 2: 8, 3: 12 };
+    depthValueEl.textContent = `${depth} (${counts[depth]} questions)`;
 }
 
 /**
@@ -91,6 +103,7 @@ async function handleScrape() {
             body: JSON.stringify({
                 query: query,
                 api_key: apiKey,
+                depth: parseInt(depthInput.value),
             }),
         });
 
